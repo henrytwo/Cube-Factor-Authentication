@@ -31,7 +31,7 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 
 while(True):
     # Capture frame-by-frame
@@ -46,11 +46,16 @@ while(True):
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # define range of blue color in HSV
-    lower_blue = np.array([100, 100, 50])
-    upper_blue = np.array([130, 255, 255])
+    #lower_blue = np.array([100, 100, 50])
+    #upper_blue = np.array([130, 255, 255])
 
+    #lower_green = np.array([60, 50, 50])
+    #upper_green = np.array([80, 255, 255])
+
+    lower_orange = np.array([0, 50, 150])
+    upper_orange = np.array([40, 255, 255])
     # Threshold the HSV image to get only blue colors
-    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    mask = cv2.inRange(hsv, lower_orange, upper_orange)
     # Bitwise-AND mask and original image
     res = cv2.bitwise_and(frame, frame, mask=mask)
     cv2.imshow('maks', mask)
@@ -64,7 +69,6 @@ while(True):
     im2, contours, hierarchy = cv2.findContours(th3, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     cv2.drawContours(frame, contours, -1, (255, 255, 0), 3)
-    cv2.imshow("Keypoints", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
