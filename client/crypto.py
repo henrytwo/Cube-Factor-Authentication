@@ -85,17 +85,16 @@ class Cube:
         return self.aes_cipher.decrypt(object)
 
     def encrypt(self, object):
-        return self.rsa_cipher.encrypt(object)
+        return self.rsa_cipher.encrypt(object).hex()
 
     def decrypt(self, object):
-        return self.rsa_cipher.decrypt(object).decode()
+        return self.rsa_cipher.decrypt(bytes.fromhex(object)).decode()
 
 if __name__ == '__main__':
     c = Cube([123,123,213], 'karlzhu')
     c.generate_pair()
 
     lol = c.encrypt(b"Hello, world!")
-    print(c.decrypt(lol))
 
     thing = c.export_pair()
 
@@ -104,3 +103,6 @@ if __name__ == '__main__':
     m = Cube([123,123,213], 'karlzhu')
 
     m.import_pair(thing)
+
+    print(lol)
+    print(m.decrypt(lol))
