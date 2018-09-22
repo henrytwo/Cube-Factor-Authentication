@@ -1,8 +1,10 @@
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
-import base64
+from Crypto.Cipher import PKCS1_OAEP
 import hashlib
+import zlib
+import base64
 
 # Courtesy of https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256/40687785
 class AESCipher(object):
@@ -30,22 +32,39 @@ class AESCipher(object):
     def _unpad(s):
         return s[:-ord(s[len(s)-1:])]
 
+# Courtesy of https://medium.com/@ismailakkila/black-hat-python-encrypt-and-decrypt-with-rsa-cryptography-bd6df84d65bc
+class RSACipher:
+    def __init__(self, pair):
+        self.private = RSA.importKey(pair['private'])
+        self.public = RSA.importKey(pair['public'])
+
+    def encrypt(self, object):
+        cipher = PKCS1_OAEP.new(self.public)
+        return cipher.encrypt(object)
+
+    def decrypt(self, object):
+        cipher = PKCS1_OAEP.new(self.private)
+        return cipher.decrypt(object)
+
+
 class Cube:
     def __init__(self, sequence, username):
 
         self.key = hashlib.sha512(str.encode(str(sequence) + username)).hexdigest() # Get a hash of the cube config
 
+        self.rsa_cipher = None
         self.aes_cipher = AESCipher(self.key)
         self.pair = { 'public' : None, 'private' : None }
 
     def import_pair(self, pair):
         self.pair = pair
-        self.pair['private'] = str.encode(self.decrypt(pair['private']))
+        self.pair['private'] = str.encode(self.aes_decrypt(pair['private']))
+
+        self.rsa_cipher = RSACipher(self.pair)
 
     def export_pair(self):
-
         public = self.pair['public']
-        private = self.encrypt(self.pair['private'])
+        private = self.aes_encrypt(self.pair['private'])
 
         export = { 'public' : public, 'private' : private.decode() }
 
@@ -56,21 +75,32 @@ class Cube:
         private_key = new_key.exportKey("PEM")
         public_key = new_key.publickey().exportKey("PEM")
 
-        self.pair = {'public': public_key, 'private': private_key}
+        self.pair = {'public': public_key.decode(), 'private': private_key.decode()}
+        self.rsa_cipher = RSACipher(self.pair)
 
-    def encrypt(self, object):
-        return self.aes_cipher.encrypt(object.decode())
+    def aes_encrypt(self, object):
+        return self.aes_cipher.encrypt(object)
 
-    def decrypt(self, object):
+    def aes_decrypt(self, object):
         return self.aes_cipher.decrypt(object)
 
-import pprint
+    def encrypt(self, object):
+        return self.rsa_cipher.encrypt(object)
 
-c = Cube([123,123,213], 'karlzhu')
-c.generate_pair()
+    def decrypt(self, object):
+        return self.rsa_cipher.decrypt(object).decode()
 
-thing = c.export_pair()
+if __name__ == '__main__':
+    c = Cube([123,123,213], 'karlzhu')
+    c.generate_pair()
 
-m = Cube([123,123,213], 'karlzhu')
+    lol = c.encrypt(b"Hello, world!")
+    print(c.decrypt(lol))
 
-m.import_pair(thing)
+    thing = c.export_pair()
+
+    #print(c.aes_decrypt(thing['private']))
+
+    m = Cube([123,123,213], 'karlzhu')
+
+    m.import_pair(thing)
