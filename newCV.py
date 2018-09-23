@@ -1,9 +1,9 @@
 import cv2
 import cv2 as cv
-
+import math
 import numpy as np
 
-cap = cv.VideoCapture(2)
+cap = cv.VideoCapture(0)
 
 while True:
     # Capture frame-by-frame
@@ -26,8 +26,27 @@ while True:
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.04 * peri, True)
 
-        if len(approx) == 4:
-            rects.append(approx)
+        maxlen = -1
+        maxdiff = 0
+        ld = []
+
+        if len(approx) == 4 and 8000 > cv2.contourArea(c) > 2000:
+
+            for k in range(3):
+                ld.append(math.hypot(approx[k][0][0] - approx[k+1][0][0], approx[k][0][1] - approx[k+1][0][1]))
+            ld.append(math.hypot(approx[0][0][0] - approx[3][0][0], approx[0][0][1] - approx[3][0][1]))
+
+            maxdiff = max([abs(ld[x] - ld[x+1]) for x in range(3)] + [abs(ld[0] - ld[2])])
+
+            M = cv.moments(c)
+
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+
+            if maxdiff < 30:
+                rects.append(approx)
+
+
 
     rects = np.array(rects)
 
