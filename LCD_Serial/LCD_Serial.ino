@@ -15,6 +15,7 @@ bool idleMode = true;
 String serial;
 String serIn;
 String code = "";
+int light = 2;
 
 
 
@@ -23,6 +24,7 @@ void setup()   /*----( SETUP: RUNS ONCE )----*/
   Serial.begin(9600);  // Used to type in characters
   lcd.begin(16,2);   // initialize the lcd for 16 chars 2 lines, turn on backlight 
   lcd.setCursor(0,0);
+  pinMode(light, OUTPUT);
   
 }
 /**
@@ -45,6 +47,7 @@ void clearLcd(){
 }
 
 void idle(){
+  digitalWrite(light, LOW);
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.write("Welcome to");
@@ -60,6 +63,7 @@ void idle(){
 }
 
 void start(){
+  digitalWrite(light, HIGH);
   lcd.setCursor(0,0);  
   lcd.print("Place cube in");
   lcd.setCursor(0,1);
