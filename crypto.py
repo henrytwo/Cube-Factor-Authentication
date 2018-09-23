@@ -32,10 +32,22 @@ class AESCipher(object):
     def _unpad(s):
         return s[:-ord(s[len(s)-1:])]
 
-# Courtesy of https://medium.com/@ismailakkila/black-hat-python-encrypt-and-decrypt-with-rsa-cryptography-bd6df84d65bc
 class RSACipher:
     def __init__(self, pair):
-        self.private = RSA.importKey(pair['private'])
+
+        self.pair = pair
+
+        try:
+            self.pair['private'] = str.encode(self.pair['private'])
+            self.pair['public'] = str.encode(self.pair['public'])
+        except:
+            pass
+
+        if b'PRIVATE' in pair['private']:
+            self.private = RSA.importKey(pair['private'])
+        else:
+            self.private = None
+
         self.public = RSA.importKey(pair['public'])
 
     def encrypt(self, object):
@@ -46,11 +58,13 @@ class RSACipher:
         cipher = PKCS1_OAEP.new(self.private)
         return cipher.decrypt(object)
 
+    def cube_encrypt(self, object):
+        return RSACipher(self.pair).encrypt(str.encode(object)).hex()
 
 class Cube:
-    def __init__(self, sequence, username):
+    def __init__(self, sequence):
 
-        self.key = hashlib.sha512(str.encode(str(sequence) + username)).hexdigest() # Get a hash of the cube config
+        self.key = hashlib.sha512(str.encode(str(sequence))).hexdigest() # Get a hash of the cube config
 
         self.rsa_cipher = None
         self.aes_cipher = AESCipher(self.key)
@@ -58,6 +72,8 @@ class Cube:
 
     def import_pair(self, pair):
         self.pair = pair
+
+        self.pair['public'] = str.encode(self.pair['public'])
         self.pair['private'] = str.encode(self.aes_decrypt(pair['private']))
 
         self.rsa_cipher = RSACipher(self.pair)
@@ -91,7 +107,7 @@ class Cube:
         return self.rsa_cipher.decrypt(bytes.fromhex(object)).decode()
 
 if __name__ == '__main__':
-    c = Cube([123,123,213], 'karlzhu')
+    c = Cube([123,123,213])
     c.generate_pair()
 
     lol = c.encrypt(b"Hello, world!")
@@ -99,8 +115,6 @@ if __name__ == '__main__':
     thing = c.export_pair()
 
     #print(c.aes_decrypt(thing['private']))
-
-    m = Cube([123,123,213], 'karlzhu')
 
     m.import_pair(thing)
 
