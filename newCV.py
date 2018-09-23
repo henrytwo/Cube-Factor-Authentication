@@ -9,12 +9,18 @@ cap = cv.VideoCapture(0)
 
 @c2k
 def sort_by_x(point_1, point_2):
-    return point_1[0] - point_1[0] - point_2[0] > 30
+    return point_1[0] < point_2[0]
 
 
 @c2k
 def sort_by_y(point_1, point_2):
     return point_1[1] < point_2[1]
+
+
+COLORS = {"BLUE": [117, 68, 15],
+          "GREEN": [123, 70, 7],
+          "ORANGE": [58, 76, 25],
+          "RED": [58, 76, 25]}
 
 
 while True:
@@ -81,39 +87,63 @@ while True:
 
     rectcentroid = []
 
-    for k in rects:
-        M = cv.moments(k)
+    if len(rects) == 9:
 
-        cx = int(M['m10'] / M['m00'])
-        cy = int(M['m01'] / M['m00'])
+        for n, k in enumerate(rects):
+            M = cv.moments(k)
 
-        rectcentroid.append([cx, cy, k])
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
 
-    sorted_centroids = []
+            rectcentroid.append([cx, cy, k])
+            #cv.putText(frame, str(n), tuple([cx, cy]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-    # sorted_x = sorted(rectcentroid, key=sort_by_x)
-    # for centroids in [sorted_x[i:i + 3] for i in range(0, len(rectcentroid), 3)]:
-    #     sorted_y = sorted(centroids, key=sort_by_y)
-    #     sorted_centroids.extend(sorted_y)
-    #
-    # for n, s in enumerate(sorted_centroids):
-    #     cv.putText(frame, str(n), tuple(s[:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        sorted_centroids = []
 
-    colors = []
+        # sorted_x = sorted(rectcentroid, key=sort_by_x)
+        # for centroids in [sorted_x[i:i + 3] for i in range(0, len(rectcentroid), 3)]:
+        #     sorted_y = sorted(centroids, key=sort_by_y)
+        #     sorted_centroids.extend(sorted_y)
+        #
+        # for n, s in enumerate(sorted_centroids):
+        #     cv.putText(frame, str(n), tuple(s[:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cube = [[], [], []]
 
-    for k in sorted_centroids:
-        try:
-            colors.append(frame[k[0]][k[1]])
-        except:
-            pass
-    print(len(colors))
-    print(colors)
+        miny = 99999
 
-    rects = np.array(rects)
+        maxy = 0
 
-    cv2.drawContours(frame, rects, -1, (255, 255, 255), 1)
+        for n, c in enumerate(rectcentroid):
+            miny = min(miny, c[1])
+            maxy = max(maxy, c[1])
 
-    cv2.imshow('contours', frame)
+        for n, c in enumerate(rectcentroid):
+            if abs(miny - c[1]) < 30:
+                cube[0].append(c)
+            elif abs(maxy - c[1]) < 30:
+                cube[2].append(c)
+            else:
+                cube[1].append(c)
+
+
+        for n, row in enumerate(cube):
+            cube[n] = sorted(row)
+
+        colors = []
+
+        for y in range(3):
+            for x in range(3):
+                cv.putText(frame, str(y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+
+        for row in cube:
+            print(row)
+        print()
+
+        rects = np.array(rects)
+
+
+        cv2.imshow('contours', frame)
 
     if cv.waitKey(1) & 0xFF == ord('q'):
         break
