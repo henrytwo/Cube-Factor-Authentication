@@ -4,6 +4,7 @@ import uuid
 import sys
 import traceback
 import time
+import crypto
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
@@ -26,6 +27,8 @@ def get_cubes():
 
             count += 1
             data = cube.to_dict()
+
+            data['name'] = cube.id
 
             cube_list.append(data)
 
@@ -50,14 +53,15 @@ def get_codes():
         if code.id: # valid code
 
             if count == 0:
-                print('|-ID-|-----------Name-----------|-----------Keyname-----------|')
+                print('|-ID-|-----------Name-----------|----------Cubename-----------|')
 
             count += 1
             data = code.to_dict()
+            data['name'] = code.id
 
             code_list.append(data)
 
-            print('|%4i|%26s|%29s|' % (count, data['name'], data['authorized_key']))
+            print('|%4i|%26s|%29s|' % (count, code.id, data['cube']))
 
     if not count:
         print('No 2FA codes found!')
@@ -68,17 +72,55 @@ def get_codes():
 
 def add_code(name, code):
 
-    keys = get_keys()
+    cubes = get_cubes()
 
-    if not keys:
+    if not cubes:
         print('boi u need to add a cube key first')
     else:
+        while True:
+            selection = int(input('Enter cube to encrypt with [ID]: ')) - 1
 
+            try:
+                cube = cubes[selection]
 
-        pass
+                print(cube)
+
+                rsa_pair = crypto.RSACipher(cube)
+
+                encrypted_code = rsa_pair.cube_encrypt(code)
+
+                firebase_admin.firestore.client(app=None).collection('codes').document(name).set(
+                    {'secret': encrypted_code, 'cube': cube['name']})
+
+                break
+
+            except:
+                traceback.print_exc()
+                print('no that doesn\'t fcking work')
 
 def get_code():
-    pass
+
+    codes = get_codes()
+    
+    if not codes:
+        print('boi u have no codes to get')
+    else:
+        while True:
+            selection = int(input('Enter code to decrypt [ID]: ')) - 1
+
+            try:
+                code = codes[selection]
+
+                print('Setting reader to code getting mode...\nGetting code: "%s"...' % code['name'])
+
+                firebase_admin.firestore.client(app=None).collection('queue').document(str(uuid.uuid4())).set(
+                    {'command': 'decrypt', 'code': code['secret'], 'cube': code['cube']})
+
+                break
+
+            except:
+                traceback.print_exc()
+                print('no that doesn\'t fcking work')
 
 def program_cube(name):
     print('Setting reader to programming mode...\nProgramming configuration: "%s"...' % name)
@@ -120,11 +162,17 @@ try:
     if len(sys.argv) == 1:
         print('boi u need to provide an argument')
 
-    elif sys.argv[1] == 'program':
+    elif sys.argv[1] == 'add':
         if len(sys.argv) < 3:
-            print('boi u need to specify the name')
+            print('boi u need to specify the type u wanna add')
         else:
-            program_cube(sys.argv[2])
+
+            if sys.argv[2] == 'cube':
+                program_cube(sys.argv[3])
+            elif sys.argv[2] == 'code':
+                add_code(sys.argv[3], sys.argv[4])
+            else:
+                print('bro invalid selection')
 
     elif sys.argv[1] == 'list':
         if len(sys.argv) < 3:
@@ -137,6 +185,9 @@ try:
                 get_codes()
             else:
                 print('wtf? invalid selection')
+
+    elif sys.argv[1] == 'decrypt':
+        get_code()
 
     else:
         print('boi dis command is not recognized')

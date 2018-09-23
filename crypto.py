@@ -34,7 +34,14 @@ class AESCipher(object):
 
 class RSACipher:
     def __init__(self, pair):
-        self.private = RSA.importKey(pair['private'])
+
+        self.pair = pair
+
+        if b'PRIVATE' in pair['private']:
+            self.private = RSA.importKey(pair['private'])
+        else:
+            self.private = None
+
         self.public = RSA.importKey(pair['public'])
 
     def encrypt(self, object):
@@ -44,6 +51,9 @@ class RSACipher:
     def decrypt(self, object):
         cipher = PKCS1_OAEP.new(self.private)
         return cipher.decrypt(object)
+
+    def cube_encrypt(self, object):
+        return RSACipher(self.pair).encrypt(str.encode(object)).hex()
 
 class Cube:
     def __init__(self, sequence):
@@ -56,6 +66,8 @@ class Cube:
 
     def import_pair(self, pair):
         self.pair = pair
+
+        self.pair['public'] = str.encode(self.pair['public'])
         self.pair['private'] = str.encode(self.aes_decrypt(pair['private']))
 
         self.rsa_cipher = RSACipher(self.pair)
