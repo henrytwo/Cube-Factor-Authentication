@@ -31,7 +31,8 @@ class pi:
         self.s.write(b'start')
 
     def set_2FA(self, code):
-        self.s.write(str.encode('2FA ' + code))
+        self.s.write(b'2FA')
+        self.s.write(str.encode(code))
 
     def set_denied(self):
         self.s.write(b'denied')
