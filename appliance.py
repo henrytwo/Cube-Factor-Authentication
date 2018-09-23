@@ -5,6 +5,7 @@ import uuid
 import crypto
 import traceback
 import pyotp
+import time
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
@@ -58,6 +59,7 @@ def program_cube(request_id, name):
         firebase_admin.firestore.client(app=None).collection('cubes').document(name).set(c.export_pair())
         firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set({'response' : 'Key successfully generated'})
     except:
+        traceback.print_exc()
         firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
             {'response': 'boi something went wrong'})
 
@@ -85,5 +87,9 @@ def listener():
             print('Something broke...')
             traceback.print_exc()
 
+        time.sleep(1)
+
 if __name__ == '__main__':
-    threading.Thread(target=listener).start()
+    print('Starting service')
+    #threading.Thread(target=listener).start()
+    listener()
