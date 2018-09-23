@@ -48,7 +48,7 @@ class RSACipher:
 class Cube:
     def __init__(self, sequence):
 
-        self.key = hashlib.sha512(str.encode(str(sequence) + username)).hexdigest() # Get a hash of the cube config
+        self.key = hashlib.sha512(str.encode(str(sequence))).hexdigest() # Get a hash of the cube config
 
         self.rsa_cipher = None
         self.aes_cipher = AESCipher(self.key)

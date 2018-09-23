@@ -10,33 +10,33 @@ firebase_admin.initialize_app(cred)
 
 REQUEST_TIMEOUT = 30 # timeout in seconds
 
-def get_keys():
+def get_cubes():
     print('Fetching from database...')
 
-    key_list = []
-    keys = firebase_admin.firestore.client(app=None).collection('keys').get()
+    cube_list = []
+    cubes = firebase_admin.firestore.client(app=None).collection('cubes').get()
 
     count = 0
 
-    for key in keys:
-        if key.id:  # valid code
+    for cube in cubes:
+        if cube.id:  # valid code
 
             if count == 0:
                 print('|-ID-|-----------Name-----------|')
 
             count += 1
-            data = key.to_dict()
+            data = cube.to_dict()
 
-            key_list.append(data)
+            cube_list.append(data)
 
-            print('|%4i|%26s|' % (count, data['name']))
+            print('|%4i|%26s|' % (count, cube.id))
 
     if not count:
-        print('No 2FA codes found!')
+        print('No cubes found!')
     else:
         print('|----|--------------------------|')
 
-    return key_list
+    return cube_list
 
 def get_codes():
     print('Fetching from database...')
@@ -64,7 +64,7 @@ def get_codes():
     else:
         print('|----|--------------------------|-----------------------------|')
 
-    return data
+    return code_list
 
 def add_code(name, code):
 
@@ -109,6 +109,8 @@ def program_cube(name):
 
                 callback_recieved = True
 
+                firebase_admin.firestore.client(app=None).collection('callback').document(c.id).delete()
+
                 break
 
         if callback_recieved:
@@ -125,7 +127,16 @@ try:
             program_cube(sys.argv[2])
 
     elif sys.argv[1] == 'list':
-        get_codes()
+        if len(sys.argv) < 3:
+            print('boi u need to specify the thing u wanna list')
+        else:
+            list_thing = sys.argv[2]
+            if list_thing == 'cubes':
+                get_cubes()
+            elif list_thing == 'codes':
+                get_codes()
+            else:
+                print('wtf? invalid selection')
 
     else:
         print('boi dis command is not recognized')
