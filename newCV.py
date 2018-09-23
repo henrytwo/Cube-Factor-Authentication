@@ -3,7 +3,6 @@ import cv2 as cv
 import math
 import numpy as np
 from functools import cmp_to_key as c2k
-import traceback
 
 cap = cv.VideoCapture(0)
 
@@ -18,19 +17,13 @@ def sort_by_y(point_1, point_2):
     return point_1[1] < point_2[1]
 
 
-COLORS = {"WHITE": [179, 179, 171],
-          "BLUE": [125, 76, 22],
-          "YELLOW": [85, 153, 169],
-          "GREEN": [62, 87, 15],
-          "ORANGE": [62, 100, 171],
-          "RED": [53, 53, 140]}
+COLORS = {"BLUE": [117, 68, 15],
+          "GREEN": [123, 70, 7],
+          "ORANGE": [58, 76, 25],
+          "RED": [58, 76, 25]}
 
-faces = [[],[],[],[],[],[]]
-keys = ["WHITE", "BLUE", "RED", "YELLOW", "ORANGE", "GREEN"]
 
-request_confirm = False
-index = 0
-while index != 6:
+while True:
     # Capture frame-by-frame
     ret, frame = cap.read()
 
@@ -103,6 +96,7 @@ while index != 6:
             cy = int(M['m01'] / M['m00'])
 
             rectcentroid.append([cx, cy, k])
+            #cv.putText(frame, str(n), tuple([cx, cy]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
         sorted_centroids = []
 
@@ -131,6 +125,7 @@ while index != 6:
             else:
                 cube[1].append(c)
 
+
         for n, row in enumerate(cube):
             cube[n] = sorted(row)
 
@@ -138,58 +133,15 @@ while index != 6:
 
         for y in range(3):
             for x in range(3):
-                try:
-                    cv.putText(frame, str(y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                    mask = np.zeros(frame.shape[:2], np.uint8)
-                    cv.drawContours(mask, [cube[y][x][2]], 0, 255, -1)
-                    mean_val = cv.mean(frame, mask=mask)
+                cv.putText(frame, str(y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-                    color = mean_val
 
-                    cv.drawContours(frame, [cube[y][x][2]], -1, tuple(color), 2)
-
-                    for key in COLORS.keys():
-                        c = COLORS[key]
-                        correct = True
-                        for n, channel in enumerate(c):
-                            if abs(channel - mean_val[n]) > 30:
-                                correct = False
-
-                        if correct:
-                            cube[y][x] = key
-                            break
-                        else:
-                            cube[y][x] = False
-                except:
-                    pass
-
-        match_complete = True
-
-        for y in range(len(cube)):
-            for x in range(len(cube[y])):
-                if not cube[y][x]:
-                    match_complete = False
-            if not match_complete:
-                break
-
-        if match_complete:
-            if cube[1][1] == keys[index]:
-                if request_confirm and cube == faces[index]:
-                    index += 1
-                    request_confirm = False
-                    print(keys[index - 1] + " done!")
-                else:
-                    faces[index] = cube
-                    request_confirm = True
-
-        print(faces)
-        if index != 6:
-            print(keys[index])
         for row in cube:
             print(row)
         print()
 
         rects = np.array(rects)
+
 
         cv2.imshow('contours', frame)
 
@@ -199,5 +151,3 @@ while index != 6:
 # When everything done, release the capture
 cap.release()
 cv.destroyAllWindows()
-
-print(faces)
