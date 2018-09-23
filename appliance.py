@@ -210,11 +210,11 @@ def scan():
 
             colors = []
 
-            for y in range(3):
-                for x in range(3):
+            for y in range(len(cube)):
+                for x in range(len(cube[y])):
                     try:
-                        cv.putText(frame, str(
-                            y * 3 + x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                        cv.putText(frame, str(y * 3 + x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1,
+                                   (255, 255, 255), 2)
                         mask = np.zeros(frame.shape[:2], np.uint8)
                         cv.drawContours(mask, [cube[y][x][2]], 0, 255, -1)
                         mean_val = cv.mean(frame, mask=mask)
@@ -227,7 +227,7 @@ def scan():
 
                         cube[y][x] = closest_col(color)[0]
                     except:
-                        pass
+                        cube[y][x] = []
 
             match_complete = True
 
