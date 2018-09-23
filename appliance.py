@@ -5,12 +5,34 @@ import uuid
 import crypto
 import traceback
 import pyotp
+import serial
 import time
+from gpiozero import LED
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
 
+class pi:
+    def __init__(self):
+        self.s = serial.Serial('/dev/ttyACM0')
+        self.led = LED(18)
+
+    def lights_on(self):
+        self.led.on()
+
+    def lights_off(self):
+        self.led.off()
+
+p = pi()
+
 def scan():
+
+    p.lights_on()
+
+    time.sleep(5)
+
+    p.lights_off()
+
     return [0, 0, 0]
 
 def decrypt_code(request_id, encrypted_secret, cube_name):
@@ -64,7 +86,12 @@ def program_cube(request_id, name):
             {'response': 'boi something went wrong'})
 
 
-def listener():
+
+
+
+if __name__ == '__main__':
+    print('Starting service')
+
     while True:
         try:
             commands = firebase_admin.firestore.client(app=None).collection('queue').get()
@@ -88,8 +115,3 @@ def listener():
             traceback.print_exc()
 
         time.sleep(1)
-
-if __name__ == '__main__':
-    print('Starting service')
-    #threading.Thread(target=listener).start()
-    listener()
