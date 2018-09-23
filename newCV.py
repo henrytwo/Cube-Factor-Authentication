@@ -3,7 +3,7 @@ import cv2 as cv
 import math
 import numpy as np
 
-cap = cv.VideoCapture(2)
+cap = cv.VideoCapture(3)
 
 debug = False
 

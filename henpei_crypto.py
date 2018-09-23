@@ -111,14 +111,20 @@ class Cube:
         return self.aes_cipher.encrypt(object)
 
     def aes_decrypt(self, object):
+
         return self.aes_cipher.decrypt(object)
+
 
     def encrypt(self, object):
         return self.rsa_cipher.encrypt(object).hex()
 
     def decrypt(self, object):
-        return self.rsa_cipher.decrypt(bytes.fromhex(object)).decode()
+        try:
+            return self.rsa_cipher.decrypt(bytes.fromhex(object)).decode()
+        except:
+            print('lmao u fucked up')
 
+            return ''
 if __name__ == '__main__':
     c = Cube([123,123,213])
     c.generate_pair()

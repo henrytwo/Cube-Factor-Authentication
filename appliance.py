@@ -14,6 +14,7 @@ import numpy as np
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
+cap = cv.VideoCapture(2)
 
 
 COLORS = {"WHITE": [200, 200, 200],
@@ -25,7 +26,7 @@ COLORS = {"WHITE": [200, 200, 200],
 
 class pi:
     def __init__(self):
-        self.s = serial.Serial('/dev/ttyACM1')
+        self.s = serial.Serial('/dev/ttyACM0')
         #self.led = LED(18)
         self.s.write(b'idle')
 
@@ -63,8 +64,6 @@ def scan():
     p.set_scan()
     #p.lights_on()
 
-    cap = cv.VideoCapture(2)
-
     debug = False
 
     def closest_col(hsv_col):
@@ -96,7 +95,7 @@ def scan():
 
     faces = [[], [], [], [], [], []]
     keys = ["WHITE", "BLUE", "RED", "YELLOW", "GREEN", "ORANGE"]
-    kk = ["WHITE", "BLUE", "RED", "WHITE", "GREEN", "WHITE"]
+    kk = ["WHITE", "BLUE", "RED", "WHITE", "GREEN", "RED"]
 
     request_confirm = False
     index = 0
@@ -283,20 +282,28 @@ def decrypt_code(request_id, encrypted_secret, cube_name):
 
                 cube_pattern = scan()
 
-                c = henpei_crypto.Cube(cube_pattern)
-                c.import_pair(cube.to_dict())
+                try:
+                    c = henpei_crypto.Cube(cube_pattern)
+                    c.import_pair(cube.to_dict())
 
-                decrypted_code = c.decrypt(encrypted_secret)
+                    decrypted_code = c.decrypt(encrypted_secret)
 
-                print(decrypted_code)
+                    print(decrypted_code)
 
-                p.set_2FA(decrypted_code)
+                    p.set_2FA(decrypted_code)
 
-                code_generator = pyotp.TOTP(decrypted_code)
-                print('Current code:', code_generator.now())
+                    code_generator = pyotp.TOTP(decrypted_code)
+                    print('Current code:', code_generator.now())
 
-                firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
-                    {'response': 'Secret successfully decrypted'})
+                    firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
+                        {'response': 'Secret successfully decrypted'})
+                except:
+                    print('lol ur code is not valid')
+
+                    p.set_denied()
+
+                    firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
+                        {'response': 'Decryption failed'})
 
                 break
 
