@@ -14,7 +14,7 @@ bool started = false;
 bool idleMode = true;
 String serial;
 String serIn;
-String code = "";
+String code = "fuck u";
 int light = 2;
 
 
@@ -56,7 +56,7 @@ void idle(){
   delay(2000);
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.write("Welcome to");
+  lcd.write("Cube Factor");
   lcd.setCursor(0,1);
   lcd.write("Authentication");
   delay(1000);  
@@ -67,7 +67,7 @@ void start(){
   lcd.setCursor(0,0);  
   lcd.print("Place cube in");
   lcd.setCursor(0,1);
-  lcd.print("marked area.");
+  lcd.print("front of camera.");
   delay(1000);
   lcd.clear();
   
@@ -96,11 +96,12 @@ void twoFA(){
   }
   
 void scanCube(){
+  digitalWrite(light, HIGH);
   lcd.setCursor(0,0);
   lcd.print("Please wait until");
   lcd.setCursor(0,1);
   lcd.print("scan is done.");
-  delay(1000);
+  delay(5000);
   lcd.clear();
 }
 
@@ -127,12 +128,15 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
   while (started == true){
     if (serial.length() != 0){
       started = false;
+      idleMode = true;
       }
     start();
+    scanCube();
     Serial.println("Enter some shit here: ");
     serial = Serial.readString();
     if (serial.length()>0) {
       started = false;
+      idleMode = true;
     }
   }
  /** 
