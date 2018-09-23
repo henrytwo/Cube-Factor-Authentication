@@ -83,7 +83,7 @@ def add_code(name, code):
             try:
                 cube = cubes[selection]
 
-                print(cube)
+                #print(cube)
 
                 rsa_pair = crypto.RSACipher(cube)
 
@@ -91,6 +91,8 @@ def add_code(name, code):
 
                 firebase_admin.firestore.client(app=None).collection('codes').document(name).set(
                     {'secret': encrypted_code, 'cube': cube['name']})
+
+                print('Successfully encrypted %s using cube %s' % (name, cube['name']))
 
                 break
 
@@ -144,6 +146,8 @@ def get_code():
                     if callback_recieved:
                         break
 
+                    time.sleep(1)
+
 
                 break
 
@@ -187,6 +191,8 @@ def program_cube(name):
         if callback_recieved:
             break
 
+        time.sleep(1)
+
 try:
     if len(sys.argv) == 1:
         print('boi u need to provide an argument')
@@ -199,7 +205,11 @@ try:
             if sys.argv[2] == 'cube':
                 program_cube(sys.argv[3])
             elif sys.argv[2] == 'code':
-                add_code(sys.argv[3], sys.argv[4])
+
+                if len(sys.argv) > 4:
+                    add_code(sys.argv[3], ' '.join(sys.argv[4:]))
+                else:
+                    print('boi u gotta provide the code')
             else:
                 print('bro invalid selection')
 

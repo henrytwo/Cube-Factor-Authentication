@@ -43,6 +43,8 @@ class RSACipher:
         except:
             pass
 
+        # OKOK WE SO WANT TO STORE THE KEYS AS BYTES OKOK
+
         if b'PRIVATE' in pair['private']:
             self.private = RSA.importKey(pair['private'])
         else:
@@ -79,6 +81,17 @@ class Cube:
         self.rsa_cipher = RSACipher(self.pair)
 
     def export_pair(self):
+        try:
+            self.pair['public'] = self.pair['public'].decode()
+        except:
+            pass
+
+        try:
+            self.pair['private'] = self.pair['private'].decode()
+        except:
+            pass
+
+
         public = self.pair['public']
         private = self.aes_encrypt(self.pair['private'])
 
