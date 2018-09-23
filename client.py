@@ -101,6 +101,7 @@ def add_code(name, code):
 def get_code():
 
     codes = get_codes()
+    request_id = str(uuid.uuid4())
     
     if not codes:
         print('boi u have no codes to get')
@@ -114,7 +115,35 @@ def get_code():
                 print('Setting reader to code getting mode...\nGetting code: "%s"...' % code['name'])
 
                 firebase_admin.firestore.client(app=None).collection('queue').document(str(uuid.uuid4())).set(
-                    {'command': 'decrypt', 'code': code['secret'], 'cube': code['cube']})
+                    {'command': 'decrypt', 'code': code['secret'], 'cube': code['cube'], 'request_id' : request_id})
+
+                callback_recieved = False
+                start_time = time.time()
+
+                print('Waiting for response...')
+
+                while True:
+
+                    if time.time() > start_time + 30:
+                        print('Aborted: Request timed out')
+                        break
+
+                    callback = firebase_admin.firestore.client(app=None).collection('callback').get()
+
+                    for c in callback:
+
+                        if c.id == request_id:
+                            print('Response:', c.to_dict()['response'])
+
+                            callback_recieved = True
+
+                            firebase_admin.firestore.client(app=None).collection('callback').document(c.id).delete()
+
+                            break
+
+                    if callback_recieved:
+                        break
+
 
                 break
 
