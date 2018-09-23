@@ -97,7 +97,7 @@ def scan():
     keys = ["WHITE", "BLUE", "RED", "YELLOW", "GREEN", "ORANGE"]
     kk = ["WHITE", "BLUE", "RED", "WHITE", "GREEN", "RED"]
 
-    request_confirm = False
+    request_confirm = 5
     index = 0
     while index != 6:
         # Capture frame-by-frame
@@ -244,14 +244,18 @@ def scan():
             if match_complete:
                 if cube[1][1] == kk[index]:
 
-                    if request_confirm and cube == faces[index]:
-                        index += 1
-                        request_confirm = False
+                    if request_confirm > 0 and cube == faces[index]:
+
+                        if request_confirm == 0:
+                            index += 1
+                            request_confirm = 5
+
+                        request_confirm -= 1
                         if index < 6:
                             print(keys[index - 1] + " done! " + "Please turn to " + keys[index])
                     else:
+                        request_confirm = 5
                         faces[index] = cube
-                        request_confirm = True
 
             rects = np.array(rects)
 
