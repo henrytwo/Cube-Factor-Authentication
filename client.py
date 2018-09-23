@@ -4,7 +4,7 @@ import uuid
 import sys
 import traceback
 import time
-import crypto
+import henpei_crypto
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
@@ -85,7 +85,7 @@ def add_code(name, code):
 
                 #print(cube)
 
-                rsa_pair = crypto.RSACipher(cube)
+                rsa_pair = henpei_crypto.RSACipher(cube)
 
                 encrypted_code = rsa_pair.cube_encrypt(code)
 

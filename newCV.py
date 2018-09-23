@@ -2,20 +2,10 @@ import cv2
 import cv2 as cv
 import math
 import numpy as np
-from functools import cmp_to_key as c2k
-import traceback
 
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(2)
 
-
-@c2k
-def sort_by_x(point_1, point_2):
-    return point_1[0] < point_2[0]
-
-
-@c2k
-def sort_by_y(point_1, point_2):
-    return point_1[1] < point_2[1]
+debug = False
 
 
 def closest_col(hsv_col):
@@ -47,7 +37,8 @@ COLORS = {"WHITE": [200, 200, 200],
 #           "RED": [53, 53, 140]}
 
 faces = [[], [], [], [], [], []]
-keys = ["WHITE", "BLUE", "RED", "YELLOW", "ORANGE", "GREEN"]
+keys = ["WHITE", "BLUE", "RED", "YELLOW", "GREEN", "ORANGE"]
+kk = ["WHITE", "BLUE", "RED", "WHITE", "GREEN", "WHITE"]
 
 request_confirm = False
 index = 0
@@ -176,27 +167,16 @@ while index != 6:
                     cv.drawContours(
                         frame, [cube[y][x][2]], -1, tuple(color), 2)
 
-                    for key in COLORS.keys():
-                        c = COLORS[key]
-                        correct = True
-                        for n, channel in enumerate(c):
-                            if abs(channel - mean_val[n]) > 30:
-                                correct = False
-
-                        if correct:
-                            cube[y][x] = key
-                            break
-                        else:
-                            cube[y][x] = mean_val
+                    cube[y][x] = closest_col(color)[0]
                 except:
                     pass
 
         match_complete = True
 
-        print("new set")
-        for i, color in enumerate(colors):
-            print(i, color, closest_col(color))
-
+        if debug:
+            print("new set")
+            for i, color in enumerate(colors):
+                print(i, color, closest_col(color))
         for y in range(len(cube)):
             for x in range(len(cube[y])):
                 if not cube[y][x]:
@@ -205,21 +185,16 @@ while index != 6:
                 break
 
         if match_complete:
-            if cube[1][1] == keys[index]:
+            if cube[1][1] == kk[index]:
+
                 if request_confirm and cube == faces[index]:
                     index += 1
                     request_confirm = False
-                    # print(keys[index - 1] + " done!")
+                    if index < 6:
+                        print(keys[index - 1] + " done! " + "Please turn to " + keys[index])
                 else:
                     faces[index] = cube
                     request_confirm = True
-
-        # print(faces)
-        # if index != 6:
-        #     print(keys[index])
-        # for row in cube:
-        #     print(row)
-        # print()
 
         rects = np.array(rects)
 
@@ -232,4 +207,4 @@ while index != 6:
 cap.release()
 cv.destroyAllWindows()
 
-# print(faces)
+print(faces)
