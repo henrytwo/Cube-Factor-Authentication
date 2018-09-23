@@ -7,7 +7,6 @@ import traceback
 import pyotp
 import serial
 import time
-from gpiozero import LED
 import cv2
 import cv2 as cv
 import math
@@ -26,16 +25,9 @@ COLORS = {"WHITE": [200, 200, 200],
 
 class pi:
     def __init__(self):
-        self.s = serial.Serial('/dev/ttyACM0')
-        self.led = LED(18)
+        self.s = serial.Serial('/dev/ttyACM1')
+        #self.led = LED(18)
         self.s.write(b'idle')
-
-    def lights_on(self):
-        self.led.on()
-
-
-    def lights_off(self):
-        self.led.off()
 
     def set_idle(self):
         self.s.write(b'idle')
@@ -69,7 +61,38 @@ def closest_col(hsv_col):
 def scan():
 
     p.set_scan()
-    p.lights_on()
+    #p.lights_on()
+
+    cap = cv.VideoCapture(2)
+
+    debug = False
+
+    def closest_col(hsv_col):
+        close_col = hsv_col[:3]
+        smallest_diff = float('inf')
+
+        for name, col in COLORS.items():
+            new = sum((a - b) ** 2 for a, b in zip(col[:3], hsv_col[:3]))
+            if new < smallest_diff:
+                smallest_diff = new
+                close_name = name
+                close_col = col
+
+        return (close_name, close_col)
+
+    COLORS = {"WHITE": [200, 200, 200],
+              "BLUE": [125, 76, 22],
+              "YELLOW": [200, 200, 200],
+              "GREEN": [62, 87, 15],
+              "ORANGE": [200, 200, 200],
+              "RED": [53, 53, 140]}
+
+    # COLORS = {"WHITE": [200, 200, 200],
+    #           "BLUE": [125, 76, 22],
+    #           "YELLOW": [85, 153, 169],
+    #           "GREEN": [62, 87, 15],
+    #           "ORANGE": [70, 210, 200],
+    #           "RED": [53, 53, 140]}
 
     faces = [[], [], [], [], [], []]
     keys = ["WHITE", "BLUE", "RED", "YELLOW", "GREEN", "ORANGE"]
@@ -202,7 +225,7 @@ def scan():
                         cv.drawContours(
                             frame, [cube[y][x][2]], -1, tuple(color), 2)
 
-                        cube[y][x] = closest_col(color)
+                        cube[y][x] = closest_col(color)[0]
                     except:
                         pass
 
@@ -212,7 +235,6 @@ def scan():
                 print("new set")
                 for i, color in enumerate(colors):
                     print(i, color, closest_col(color))
-
             for y in range(len(cube)):
                 for x in range(len(cube[y])):
                     if not cube[y][x]:
@@ -221,7 +243,8 @@ def scan():
                     break
 
             if match_complete:
-                if cube[1][1] == keys[index]:
+                if cube[1][1] == kk[index]:
+
                     if request_confirm and cube == faces[index]:
                         index += 1
                         request_confirm = False
@@ -242,10 +265,11 @@ def scan():
     cap.release()
     cv.destroyAllWindows()
 
-    p.lights_off()
+    print(faces)
+
     p.set_idle()
 
-    return [0, 0, 0]
+    return faces
 
 def decrypt_code(request_id, encrypted_secret, cube_name):
 
@@ -255,7 +279,7 @@ def decrypt_code(request_id, encrypted_secret, cube_name):
         for cube in cubes:
             if cube.id == cube_name:
 
-                print('Cube found!')
+                print('Cube key found')
 
                 cube_pattern = scan()
 
@@ -282,6 +306,7 @@ def decrypt_code(request_id, encrypted_secret, cube_name):
             firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
                 {'response': 'Decryption failed'})
     except:
+        traceback.print_exc()
         firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
                         {'response': 'Decryption failed'})
 
