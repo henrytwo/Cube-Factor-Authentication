@@ -14,44 +14,52 @@ def scan():
 
 def decrypt_code(request_id, encrypted_secret, cube_name):
 
-    cubes = firebase_admin.firestore.client(app=None).collection('cubes').get()
+    try:
+        cubes = firebase_admin.firestore.client(app=None).collection('cubes').get()
 
-    for cube in cubes:
-        if cube.id == cube_name:
+        for cube in cubes:
+            if cube.id == cube_name:
 
-            print('Cube found!')
+                print('Cube found!')
 
-            cube_pattern = scan()
+                cube_pattern = scan()
 
-            c = crypto.Cube(cube_pattern)
-            c.import_pair(cube.to_dict())
+                c = crypto.Cube(cube_pattern)
+                c.import_pair(cube.to_dict())
 
-            decrypted_code = c.decrypt(encrypted_secret)
+                decrypted_code = c.decrypt(encrypted_secret)
 
-            print(decrypted_code)
+                print(decrypted_code)
 
-            code_generator = pyotp.TOTP(decrypted_code)
-            print('Current code:', code_generator.now())
+                code_generator = pyotp.TOTP(decrypted_code)
+                print('Current code:', code_generator.now())
 
+                firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
+                    {'response': 'Secret successfully decrypted'})
+
+                break
+
+        else:
+            print('shit, can\'t find the cube!')
             firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
-                {'response': 'Secret successfully decrypted'})
-
-            break
-
-    else:
-        print('shit, can\'t find the cube!')
+                {'response': 'Decryption failed'})
+    except:
         firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
-            {'response': 'Decryption failed'})
-
+                        {'response': 'Decryption failed'})
 
 def program_cube(request_id, name):
-    cube_pattern = scan()
 
-    c = crypto.Cube(cube_pattern)
-    c.generate_pair()
+    try:
+        cube_pattern = scan()
 
-    firebase_admin.firestore.client(app=None).collection('cubes').document(name).set(c.export_pair())
-    firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set({'response' : 'Key successfully generated'})
+        c = crypto.Cube(cube_pattern)
+        c.generate_pair()
+
+        firebase_admin.firestore.client(app=None).collection('cubes').document(name).set(c.export_pair())
+        firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set({'response' : 'Key successfully generated'})
+    except:
+        firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
+            {'response': 'boi something went wrong'})
 
 
 def listener():
@@ -68,9 +76,9 @@ def listener():
                 if command['command'] == 'program':
                     program_cube(c.id, command['name'])
                 elif command['command'] == 'decrypt':
-                    decrypt_code(c.id, command['code'], command['cube'])
+                    decrypt_code(command['request_id'], command['code'], command['cube'])
 
-                print('Incoming command...', c.id, command)
+                print('Incoming command...', c.id)
 
                 firebase_admin.firestore.client(app=None).collection('queue').document(c.id).delete()
         except:
