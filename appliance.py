@@ -16,6 +16,7 @@ class pi:
     def __init__(self):
         self.s = serial.Serial('/dev/ttyACM0')
         self.led = LED(18)
+        self.s.write(b'idle')
 
     def lights_on(self):
         self.led.on()
@@ -23,15 +24,29 @@ class pi:
     def lights_off(self):
         self.led.off()
 
+    def set_idle(self):
+        self.s.write(b'idle')
+
+    def set_scan(self):
+        self.s.write(b'start')
+
+    def set_2FA(self, code):
+        self.s.write(str.encode('2FA ' + code))
+
+    def set_denied(self):
+        self.s.write(b'denied')
+
 p = pi()
 
 def scan():
 
+    p.set_scan()
     p.lights_on()
 
     time.sleep(5)
 
     p.lights_off()
+    p.set_idle()
 
     return [0, 0, 0]
 
@@ -54,6 +69,8 @@ def decrypt_code(request_id, encrypted_secret, cube_name):
 
                 print(decrypted_code)
 
+                p.set_2FA(decrypted_code)
+
                 code_generator = pyotp.TOTP(decrypted_code)
                 print('Current code:', code_generator.now())
 
@@ -63,6 +80,7 @@ def decrypt_code(request_id, encrypted_secret, cube_name):
                 break
 
         else:
+            p.set_denied()
             print('shit, can\'t find the cube!')
             firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
                 {'response': 'Decryption failed'})
