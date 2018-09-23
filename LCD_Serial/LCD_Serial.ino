@@ -31,6 +31,14 @@ void setup()   /*----( SETUP: RUNS ONCE )----*/
  * display 2FA for loop countdown timer
  * 
  */
+void deny(){
+  Serial.println("ha get fucked");
+  lcd.clear();
+  delay(1000);
+  lcd.setCursor(0,0);
+  lcd.write("U gei fuck.");
+  delay(1000);
+  }
 void clearLcd(){
   lcd.clear();
   delay(1000);  
@@ -73,6 +81,7 @@ void start(){
 }
 
 void twoFA(){
+  lcd.clear();
   lcd.setCursor(0,0);
   lcd.write("Code: ");
   lcd.setCursor(6,0);
@@ -112,7 +121,15 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
   }
  
   while (started == true){
+    if (serial.length() != 0){
+      started = false;
+      }
     start();
+    Serial.println("Enter some shit here: ");
+    serial = Serial.readString();
+    if (serial.length()>0) {
+      started = false;
+    }
   }
  /** 
   if (Serial.available()) {
@@ -133,12 +150,8 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
   if (serial == "clearLcd"){
     Serial.print("Cleared.");
     clearLcd();
+    idleMode = true;
    }
-
-  if (serial == "idle"){
-     Serial.print("Idle Mode");
-     idle();
-    }
     
   if (serial == "2FA"){
      Serial.print("code generated!");
@@ -159,10 +172,17 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
       if (t == 0){
         lcd.clear();
         idleMode = true;
+        idle();
         delay(1000);
         }
       }
     }   
+  if (serial == "deny"){
+    deny();
+    delay(2000);
+    idleMode = true;
+    idle();
+    }
   if (serial == "writeLcd"){
     Serial.print("Enter chars to print: ");
     while (Serial.available()==0)  
