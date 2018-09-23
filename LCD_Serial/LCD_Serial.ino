@@ -11,9 +11,11 @@ LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I
 /*-----( Declare Variables )-----*/
 int pos = 0;
 bool started = false;
+bool idleMode = true;
 String serial;
 String serIn;
-String code = "geiiii";
+String code = "";
+
 
 
 void setup()   /*----( SETUP: RUNS ONCE )----*/
@@ -38,23 +40,19 @@ void idle(){
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.write("Welcome to");
-  lcd.setCursor(1,0);
+  lcd.setCursor(0,1);
   lcd.write("Cube Factor");
-  delay(1000);
+  delay(2000);
   lcd.clear();
-  lcd.setCursor(1,0);
-  lcd.write("Cube Factor");
-  lcd.setCursor(1,0);
-  lcd.write("Authenticator!");
+  lcd.setCursor(0,0);
+  lcd.write("Welcome to");
+  lcd.setCursor(0,1);
+  lcd.write("Authentication");
   delay(1000);  
 }
 
 void start(){
-  lcd.setCursor(0,0);
-  lcd.print("Hello user.");
-  delay(1000);
-  lcd.clear();
-  
+  lcd.setCursor(0,0);  
   lcd.print("Place cube in");
   lcd.setCursor(0,1);
   lcd.print("marked area.");
@@ -62,23 +60,14 @@ void start(){
   lcd.clear();
   
   lcd.setCursor(0,0);
-  lcd.print("White side");
+  lcd.print("Follow the");
   lcd.setCursor(0,1);
-  lcd.print("face down.");
+  lcd.print("instructions");
   delay(1000);
   lcd.clear();
   
   lcd.setCursor(0,0);
-  lcd.print("Rotate cube");
-  lcd.setCursor(0,1);
-  lcd.print("until all 6");
-  delay(1000);
-  lcd.clear();
-
-  lcd.setCursor(0,0);
-  lcd.print("sides are scanned");
-  lcd.setCursor(0,1);
-  lcd.print("properly.");
+  lcd.print("on screen.");
   delay(1000);
   lcd.clear();
 }
@@ -90,6 +79,7 @@ void twoFA(){
   lcd.print(code);
   lcd.setCursor(0,1);
   lcd.write("Expires in: ");
+  delay(1000);
   }
   
 void scanCube(){
@@ -109,29 +99,35 @@ void writeLcd(){
 
 void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
 {
-  while (started == true){
-    start();  
+  while (idleMode == true){
+    if (serial.length() != 0){
+      idleMode = false;
+      }
+    idle();
+    Serial.println("Enter some shit here: ");
+    serial = Serial.readString();
+    if (serial.length()>0) {
+      idleMode = false;
+    }
   }
-  
+ 
+  while (started == true){
+    start();
+  }
+ /** 
   if (Serial.available()) {
     lcd.clear();
     while (Serial.available() > 0) {
       lcd.write(Serial.read());
     }
   }
-  
-  Serial.println("Enter some shit here: ");
-  
-  while (Serial.available()==0)  
-  {              
-   // wait for user input
-  }
-  serial = Serial.readString();
-  
+  **/
+ 
   if (serial == "start"){
     Serial.print("Started Program.");
     start();
     started = true;
+    idleMode = false;
    }
    
   if (serial == "clearLcd"){
@@ -146,18 +142,24 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
     
   if (serial == "2FA"){
      Serial.print("code generated!");
+     while (Serial.available() > 0) {
+      lcd.write(Serial.read());
+    }
+     code = Serial.readString();
      twoFA();
      
      for (int t = 30; t >= 0; t--){
+      if (t < 10){
+        lcd.setCursor(13,1);
+        lcd.print(" ");
+       }
       lcd.setCursor(12,1);
       lcd.print(t);
-      delay(100);
-      if (t == 10){
-        lcd.setCursor(11,1);
-        lcd.print(" ");
-        }
+      delay(500);
       if (t == 0){
         lcd.clear();
+        idleMode = true;
+        delay(1000);
         }
       }
     }   
