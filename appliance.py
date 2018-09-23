@@ -20,8 +20,3 @@ def listener():
             firebase_admin.firestore.client(app=None).collection('queue').document(c.id).delete()
 
         # do shit here
-
-if __name__ == '__main__':
-    #request_listener = threading.Thread(target=listener).start()
-
-    listener()
