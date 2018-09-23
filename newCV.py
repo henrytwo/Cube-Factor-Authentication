@@ -4,7 +4,7 @@ import math
 import numpy as np
 from functools import cmp_to_key as c2k
 
-cap = cv.VideoCapture(2)
+cap = cv.VideoCapture(0)
 
 
 @c2k
@@ -133,10 +133,8 @@ while True:
 
         for y in range(3):
             for x in range(3):
-                try:
-                    cv.putText(frame, str(y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                except:
-                    print('u fucked up')
+                cv.putText(frame, str(y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
 
         for row in cube:
             print(row)
