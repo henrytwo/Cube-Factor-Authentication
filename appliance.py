@@ -14,8 +14,6 @@ import numpy as np
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
-cap = cv.VideoCapture(2)
-
 
 COLORS = {"WHITE": [200, 200, 200],
           "BLUE": [125, 76, 22],
@@ -26,9 +24,12 @@ COLORS = {"WHITE": [200, 200, 200],
 
 class pi:
     def __init__(self):
-        self.s = serial.Serial('/dev/ttyACM0')
+        self.s = serial.Serial('/dev/ttyACM2')
         #self.led = LED(18)
-        self.s.write(b'idle')
+        #self.s.write(b'idle')
+
+        #self.set_2FA('123456')
+        self.set_denied()
 
     def set_idle(self):
         self.s.write(b'idle')
@@ -38,10 +39,12 @@ class pi:
 
     def set_2FA(self, code):
         self.s.write(b'2FA')
+        print('written')
+        time.sleep(5)
         self.s.write(str.encode(code))
 
     def set_denied(self):
-        self.s.write(b'denied')
+        self.s.write(b'deny')
 
 p = pi()
 
@@ -66,7 +69,7 @@ def scan():
 
     debug = False
 
-    cap = cv.VideoCapture(3)
+    cap = cv.VideoCapture(2)
 
     COLORS = {"WHITE": [179, 179, 171],
               "BLUE": [125, 76, 22],
@@ -186,8 +189,8 @@ def scan():
 
             colors = []
 
-            for y in range(3):
-                for x in range(3):
+            for y in range(len(cube)):
+                for x in range(len(cube[y])):
                     try:
                         cv.putText(frame, str(y * 3 + x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1,
                                    (255, 255, 255), 2)
