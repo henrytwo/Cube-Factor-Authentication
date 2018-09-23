@@ -18,14 +18,35 @@ def sort_by_y(point_1, point_2):
     return point_1[1] < point_2[1]
 
 
-COLORS = {"WHITE": [179, 179, 171],
+def closest_col(hsv_col):
+    close_col = hsv_col[:3]
+    smallest_diff = float('inf')
+
+    for name, col in COLORS.items():
+        new = sum((a - b)**2 for a, b in zip(col[:3], hsv_col[:3]))
+        if new < smallest_diff:
+            smallest_diff = new
+            close_name = name
+            close_col = col
+
+    return (close_name, close_col)
+
+
+COLORS = {"WHITE": [200, 200, 200],
           "BLUE": [125, 76, 22],
-          "YELLOW": [85, 153, 169],
+          "YELLOW": [200, 200, 200],
           "GREEN": [62, 87, 15],
-          "ORANGE": [62, 100, 171],
+          "ORANGE": [200, 200, 200],
           "RED": [53, 53, 140]}
 
-faces = [[],[],[],[],[],[]]
+# COLORS = {"WHITE": [200, 200, 200],
+#           "BLUE": [125, 76, 22],
+#           "YELLOW": [85, 153, 169],
+#           "GREEN": [62, 87, 15],
+#           "ORANGE": [70, 210, 200],
+#           "RED": [53, 53, 140]}
+
+faces = [[], [], [], [], [], []]
 keys = ["WHITE", "BLUE", "RED", "YELLOW", "ORANGE", "GREEN"]
 
 request_confirm = False
@@ -44,7 +65,8 @@ while index != 6:
     kernel = np.ones((3, 3), np.uint8)
     dilated = cv2.dilate(canny, kernel, iterations=2)
 
-    img2, contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img2, contours, hierarchy = cv2.findContours(
+        dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     rects = []
     rectcentroid = []
@@ -62,10 +84,13 @@ while index != 6:
         if len(approx) == 4:
 
             for k in range(3):
-                ld.append(math.hypot(approx[k][0][0] - approx[k + 1][0][0], approx[k][0][1] - approx[k + 1][0][1]))
-            ld.append(math.hypot(approx[0][0][0] - approx[3][0][0], approx[0][0][1] - approx[3][0][1]))
+                ld.append(math.hypot(
+                    approx[k][0][0] - approx[k + 1][0][0], approx[k][0][1] - approx[k + 1][0][1]))
+            ld.append(math.hypot(
+                approx[0][0][0] - approx[3][0][0], approx[0][0][1] - approx[3][0][1]))
 
-            maxdiff = max([abs(ld[x] - ld[x + 1]) for x in range(3)] + [abs(ld[0] - ld[2])])
+            maxdiff = max([abs(ld[x] - ld[x + 1])
+                           for x in range(3)] + [abs(ld[0] - ld[2])])
 
             M = cv.moments(c)
 
@@ -139,14 +164,17 @@ while index != 6:
         for y in range(3):
             for x in range(3):
                 try:
-                    cv.putText(frame, str(y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    cv.putText(frame, str(
+                        y*3+x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
                     mask = np.zeros(frame.shape[:2], np.uint8)
                     cv.drawContours(mask, [cube[y][x][2]], 0, 255, -1)
                     mean_val = cv.mean(frame, mask=mask)
 
                     color = mean_val
+                    colors.append(color)
 
-                    cv.drawContours(frame, [cube[y][x][2]], -1, tuple(color), 2)
+                    cv.drawContours(
+                        frame, [cube[y][x][2]], -1, tuple(color), 2)
 
                     for key in COLORS.keys():
                         c = COLORS[key]
@@ -165,6 +193,10 @@ while index != 6:
 
         match_complete = True
 
+        print("new set")
+        for i, color in enumerate(colors):
+            print(i, color, closest_col(color))
+
         for y in range(len(cube)):
             for x in range(len(cube[y])):
                 if not cube[y][x]:
@@ -177,17 +209,17 @@ while index != 6:
                 if request_confirm and cube == faces[index]:
                     index += 1
                     request_confirm = False
-                    print(keys[index - 1] + " done!")
+                    # print(keys[index - 1] + " done!")
                 else:
                     faces[index] = cube
                     request_confirm = True
 
-        print(faces)
-        if index != 6:
-            print(keys[index])
-        for row in cube:
-            print(row)
-        print()
+        # print(faces)
+        # if index != 6:
+        #     print(keys[index])
+        # for row in cube:
+        #     print(row)
+        # print()
 
         rects = np.array(rects)
 
@@ -200,4 +232,4 @@ while index != 6:
 cap.release()
 cv.destroyAllWindows()
 
-print(faces)
+# print(faces)
