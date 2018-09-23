@@ -4,6 +4,7 @@ import threading
 import uuid
 import crypto
 import traceback
+import pyotp
 
 cred = credentials.Certificate("servicekey.json")
 firebase_admin.initialize_app(cred)
@@ -25,7 +26,12 @@ def decrypt_code(request_id, encrypted_secret, cube_name):
             c = crypto.Cube(cube_pattern)
             c.import_pair(cube.to_dict())
 
-            print('FUCKING DECRUPTed', c.decrypt(encrypted_secret))
+            decrypted_code = c.decrypt(encrypted_secret)
+
+            print(decrypted_code)
+
+            code_generator = pyotp.TOTP(decrypted_code)
+            print('Current code:', code_generator.now())
 
             firebase_admin.firestore.client(app=None).collection('callback').document(request_id).set(
                 {'response': 'Secret successfully decrypted'})
@@ -57,7 +63,7 @@ def listener():
 
                 command = c.to_dict()
 
-                print(command)
+                #print(command)
 
                 if command['command'] == 'program':
                     program_cube(c.id, command['name'])

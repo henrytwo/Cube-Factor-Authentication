@@ -37,6 +37,12 @@ class RSACipher:
 
         self.pair = pair
 
+        try:
+            self.pair['private'] = str.encode(self.pair['private'])
+            self.pair['public'] = str.encode(self.pair['public'])
+        except:
+            pass
+
         if b'PRIVATE' in pair['private']:
             self.private = RSA.importKey(pair['private'])
         else:
