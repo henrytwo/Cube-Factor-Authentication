@@ -32,7 +32,6 @@ class AESCipher(object):
     def _unpad(s):
         return s[:-ord(s[len(s)-1:])]
 
-# Courtesy of https://medium.com/@ismailakkila/black-hat-python-encrypt-and-decrypt-with-rsa-cryptography-bd6df84d65bc
 class RSACipher:
     def __init__(self, pair):
         self.private = RSA.importKey(pair['private'])
@@ -45,7 +44,6 @@ class RSACipher:
     def decrypt(self, object):
         cipher = PKCS1_OAEP.new(self.private)
         return cipher.decrypt(object)
-
 
 class Cube:
     def __init__(self, sequence, username):
