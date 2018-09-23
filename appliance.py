@@ -246,13 +246,14 @@ def scan():
 
                     if request_confirm > 0 and cube == faces[index]:
 
+                        request_confirm -= 1
+
                         if request_confirm == 0:
                             index += 1
                             request_confirm = 5
 
-                        request_confirm -= 1
-                        if index < 6:
-                            print(keys[index - 1] + " done! " + "Please turn to " + keys[index])
+                            if index < 6:
+                                print(keys[index - 1] + " done! " + "Please turn to " + keys[index])
                     else:
                         request_confirm = 5
                         faces[index] = cube
