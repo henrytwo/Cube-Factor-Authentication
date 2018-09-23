@@ -5,7 +5,7 @@ import numpy as np
 from functools import cmp_to_key as c2k
 import traceback
 
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 
 @c2k
