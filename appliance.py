@@ -66,38 +66,19 @@ def scan():
 
     debug = False
 
-    def closest_col(hsv_col):
-        close_col = hsv_col[:3]
-        smallest_diff = float('inf')
+    cap = cv.VideoCapture(3)
 
-        for name, col in COLORS.items():
-            new = sum((a - b) ** 2 for a, b in zip(col[:3], hsv_col[:3]))
-            if new < smallest_diff:
-                smallest_diff = new
-                close_name = name
-                close_col = col
-
-        return (close_name, close_col)
-
-    COLORS = {"WHITE": [200, 200, 200],
+    COLORS = {"WHITE": [179, 179, 171],
               "BLUE": [125, 76, 22],
-              "YELLOW": [200, 200, 200],
+              "YELLOW": [85, 153, 169],
               "GREEN": [62, 87, 15],
-              "ORANGE": [200, 200, 200],
+              "ORANGE": [62, 100, 171],
               "RED": [53, 53, 140]}
 
-    # COLORS = {"WHITE": [200, 200, 200],
-    #           "BLUE": [125, 76, 22],
-    #           "YELLOW": [85, 153, 169],
-    #           "GREEN": [62, 87, 15],
-    #           "ORANGE": [70, 210, 200],
-    #           "RED": [53, 53, 140]}
-
     faces = [[], [], [], [], [], []]
-    keys = ["WHITE", "BLUE", "RED", "YELLOW", "GREEN", "ORANGE"]
-    kk = ["WHITE", "BLUE", "RED", "WHITE", "GREEN", "RED"]
+    keys = ["WHITE", "BLUE", "RED", "YELLOW", "ORANGE", "GREEN"]
 
-    request_confirm = 5
+    request_confirm = False
     index = 0
     while index != 6:
         # Capture frame-by-frame
@@ -113,8 +94,7 @@ def scan():
         kernel = np.ones((3, 3), np.uint8)
         dilated = cv2.dilate(canny, kernel, iterations=2)
 
-        img2, contours, hierarchy = cv2.findContours(
-            dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        img2, contours, hierarchy = cv2.findContours(dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         rects = []
         rectcentroid = []
@@ -132,13 +112,10 @@ def scan():
             if len(approx) == 4:
 
                 for k in range(3):
-                    ld.append(math.hypot(
-                        approx[k][0][0] - approx[k + 1][0][0], approx[k][0][1] - approx[k + 1][0][1]))
-                ld.append(math.hypot(
-                    approx[0][0][0] - approx[3][0][0], approx[0][0][1] - approx[3][0][1]))
+                    ld.append(math.hypot(approx[k][0][0] - approx[k + 1][0][0], approx[k][0][1] - approx[k + 1][0][1]))
+                ld.append(math.hypot(approx[0][0][0] - approx[3][0][0], approx[0][0][1] - approx[3][0][1]))
 
-                maxdiff = max([abs(ld[x] - ld[x + 1])
-                               for x in range(3)] + [abs(ld[0] - ld[2])])
+                maxdiff = max([abs(ld[x] - ld[x + 1]) for x in range(3)] + [abs(ld[0] - ld[2])])
 
                 M = cv.moments(c)
 
@@ -209,8 +186,8 @@ def scan():
 
             colors = []
 
-            for y in range(len(cube)):
-                for x in range(len(cube[y])):
+            for y in range(3):
+                for x in range(3):
                     try:
                         cv.putText(frame, str(y * 3 + x), tuple(cube[y][x][:2]), cv.FONT_HERSHEY_SIMPLEX, 1,
                                    (255, 255, 255), 2)
@@ -219,21 +196,26 @@ def scan():
                         mean_val = cv.mean(frame, mask=mask)
 
                         color = mean_val
-                        colors.append(color)
 
-                        cv.drawContours(
-                            frame, [cube[y][x][2]], -1, tuple(color), 2)
+                        cv.drawContours(frame, [cube[y][x][2]], -1, tuple(color), 2)
 
-                        cube[y][x] = closest_col(color)[0]
+                        for key in COLORS.keys():
+                            c = COLORS[key]
+                            correct = True
+                            for n, channel in enumerate(c):
+                                if abs(channel - mean_val[n]) > 37:
+                                    correct = False
+
+                            if correct:
+                                cube[y][x] = key
+                                break
+                            else:
+                                cube[y][x] = False
                     except:
                         cube[y][x] = []
 
             match_complete = True
 
-            if debug:
-                print("new set")
-                for i, color in enumerate(colors):
-                    print(i, color, closest_col(color))
             for y in range(len(cube)):
                 for x in range(len(cube[y])):
                     if not cube[y][x]:
@@ -242,21 +224,15 @@ def scan():
                     break
 
             if match_complete:
-                if cube[1][1] == kk[index]:
-
-                    if request_confirm > 0 and cube == faces[index]:
-
-                        request_confirm -= 1
-
-                        if request_confirm == 0:
-                            index += 1
-                            request_confirm = 5
-
-                            if index < 6:
-                                print(keys[index - 1] + " done! " + "Please turn to " + keys[index])
+                if cube[1][1] == keys[index]:
+                    if request_confirm and cube == faces[index]:
+                        index += 1
+                        request_confirm = False
+                        if (index < 6):
+                            print(keys[index - 1] + " done! Turn to" + keys[index])
                     else:
-                        request_confirm = 5
                         faces[index] = cube
+                        request_confirm = True
 
             rects = np.array(rects)
 
