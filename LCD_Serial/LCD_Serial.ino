@@ -13,8 +13,8 @@ int pos = 0;
 bool started = false;
 bool idleMode = true;
 String serial;
-String serIn;
-String code = "fuck u";
+String serial2;
+String code = "069070";
 int light = 2;
 
 
@@ -34,13 +34,14 @@ void setup()   /*----( SETUP: RUNS ONCE )----*/
  * 
  */
 void deny(){
-  Serial.println("ha get fucked");
+  Serial.println("Denied.");
   lcd.clear();
   delay(1000);
   lcd.setCursor(0,0);
-  lcd.write("U gei fuck.");
+  lcd.write("Access Denied.");
   delay(1000);
   }
+  
 void clearLcd(){
   lcd.clear();
   delay(1000);  
@@ -87,7 +88,7 @@ void start(){
 void twoFA(){
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.write("Code: ");
+  lcd.write("Code: 069070");
   lcd.setCursor(6,0);
   lcd.print(code);
   lcd.setCursor(0,1);
@@ -101,8 +102,6 @@ void scanCube(){
   lcd.print("Please wait until");
   lcd.setCursor(0,1);
   lcd.print("scan is done.");
-  delay(5000);
-  lcd.clear();
 }
 
 void writeLcd(){
@@ -118,7 +117,7 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
       idleMode = false;
       }
     idle();
-    Serial.println("Enter some shit here: ");
+    Serial.println("Enter a command: ");
     serial = Serial.readString();
     if (serial.length()>0) {
       idleMode = false;
@@ -128,11 +127,10 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
   while (started == true){
     if (serial.length() != 0){
       started = false;
-      idleMode = true;
-      }
+     }
     start();
     scanCube();
-    Serial.println("Enter some shit here: ");
+    Serial.println("Enter a command: ");
     serial = Serial.readString();
     if (serial.length()>0) {
       started = false;
@@ -162,7 +160,7 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
    }
     
   if (serial == "2FA"){
-     Serial.print("code generated!");
+     Serial.println("code generated!");
      while (Serial.available() > 0) {
       lcd.write(Serial.read());
     }
@@ -197,7 +195,7 @@ void loop()   /*----( LOOP: RUNS CONSTANTLY )----*/
     {              
    // wait for user input
     }
-    serIn = Serial.readString();
+    serial = Serial.readString();
     writeLcd();
    }
 }
